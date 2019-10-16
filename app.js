@@ -1,8 +1,11 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+const passport = require('passport');
+const googleStrategy = require('passport-google-oauth20').Strategy;
+const keys = require('./config/keys');
 
 var indexRouter = require('./routes/index');
 //var usersRouter = require('./routes/users');
@@ -21,6 +24,25 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(indexRouter);
 //app.use('/users', usersRouter);
+
+passport.use(new googleStrategy({
+    clientID: keys.googleClientID,
+    clientSecret: keys.googleClientSecret,
+    // the route the user will be sent to after user grants permission
+    callbackURL: '/auth/google/callback'
+  }, (accessToken) => {
+    console.log(accessToken);
+  })
+);
+
+app.get('/auth/google/callback', passport.authenticate('google'));
+
+app.get(
+  '/auth/google', 
+  passport.authenticate('google', {
+      scope: ['profile','email']
+  })
+);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
